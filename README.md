@@ -25,6 +25,11 @@ JsonPowerDB is a Real-time, High Performance, Lightweight and Simple to Use, Res
 
 
 
+
+# Release History
+
+Version 1.0.0: Initial release of the Student Enrollment Form project on GitHub 07/17/2024
+
 # Table of Contents
 
 Setup Instructions
