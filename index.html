@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Bootstrap Example</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+    <script src="https://login2explore.com/jpdb/resources/js/0.0.3/jpdb-commons.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h2>Employee Form using the JPDB API</h2>
+        <br>
+        <form id="empForm" method="post">
+            <div class="form-group">
+                <span><label for="empId">Employee ID:</label> <label id="empIdMsg"></label></span>
+                <input type="text" class="form-control" name="empId" id="empId" placeholder="Enter Employee ID" required>
+            </div>
+            <div class="form-group">
+                <label for="empName">Employee Name:</label>
+                <input type="text" class="form-control" id="empName" placeholder="Enter Employee Name" name="empName">
+            </div>
+            <div class="form-group">
+                <label for="Salary">Basic Salary:</label>
+                <input type="number" class="form-control" id="Salary" placeholder="Enter Employee Salary" name="Salary">
+            </div>
+            <div class="form-group">
+                <label for="HRA">HRA:</label>
+                <input type="number" class="form-control" id="HRA" placeholder="Enter Employee HRA" name="HRA">
+            </div>
+            <div class="form-group">
+                <label for="DA">DA:</label>
+                <input type="number" class="form-control" id="DA" placeholder="Enter Employee DA" name="DA">
+            </div>
+            <div class="form-group">
+                <label for="Deduction">Deduction:</label>
+                <input type="number" class="form-control" id="Deduction" placeholder="Enter Employee Deduction" name="Deduction">
+            </div>
+            <br>
+            <input type="button" class="btn btn-primary" id="empSave" value="Save" onclick="saveEmployee();">
+            <input type="button" class="btn btn-primary" id="empChange" value="Change" onclick="updateEmployee();">
+            <input type="button" class="btn btn-primary" id="empReset" value="Reset" onclick="resetForm();">
+        </form>
+    </div>
+    <script>
+        $(document).ready(function() {
+            disableFieldsAndButtons();
+            $("#empId").focus();
+
+            $("#empId").on("blur", function() {
+                var empIdVar = $("#empId").val();
+                if (empIdVar !== "") {
+                    checkIfEmployeeExists(empIdVar);
+                }
+            });
+        });
+
+        function disableFieldsAndButtons() {
+            $("#empName, #Salary, #HRA, #DA, #Deduction").prop("disabled", true);
+            $("#empSave, #empChange, #empReset").prop("disabled", true);
+        }
+
+        function enableFields() {
+            $("#empName, #Salary, #HRA, #DA, #Deduction").prop("disabled", false);
+        }
+
+        function enableButtons(save, change, reset) {
+            $("#empSave").prop("disabled", !save);
+            $("#empChange").prop("disabled", !change);
+            $("#empReset").prop("disabled", !reset);
+        }
+
+        function resetForm() {
+            $("#empId").val("").prop("disabled", false).focus();
+            $("#empName, #Salary, #HRA, #DA, #Deduction").val("").prop("disabled", true);
+            enableButtons(false, false, true);
+        }
+
+        function validateAndGetFormData() {
+            var empIdVar = $("#empId").val();
+            if (empIdVar === "") {
+                alert("Employee ID is required.");
+                $("#empId").focus();
+                return "";
+            }
+
+            var empNameVar = $("#empName").val();
+            if (empNameVar === "") {
+                alert("Employee Name is required.");
+                $("#empName").focus();
+                return "";
+            }
+
+            var empSalaryVar = $("#Salary").val();
+            if (empSalaryVar === "") {
+                alert("Employee Salary is required.");
+                $("#Salary").focus();
+                return "";
+            }
+
+            var empHRAVar = $("#HRA").val();
+            if (empHRAVar === "") {
+                alert("Employee HRA is required.");
+                $("#HRA").focus();
+                return "";
+            }
+
+            var empDAVar = $("#DA").val();
+            if (empDAVar === "") {
+                alert("Employee DA is required.");
+                $("#DA").focus();
+                return "";
+            }
+
+            var empDeductionVar = $("#Deduction").val();
+            if (empDeductionVar === "") {
+                alert("Employee Deduction is required.");
+                $("#Deduction").focus();
+                return "";
+            }
+
+            var jsonStrObj = {
+                id: empIdVar,
+                name: empNameVar,
+                salary: empSalaryVar,
+                hra: empHRAVar,
+                da: empDAVar,
+                deduction: empDeductionVar
+            };
+            return JSON.stringify(jsonStrObj);
+        }
+
+        function checkIfEmployeeExists(empId) {
+            var getReqStr = createGET_BY_KEYRequest("90932220|-31949213784165025|90963593", "EMP-DB", "EmpData", JSON.stringify({ id: empId }));
+            jQuery.ajaxSetup({async: false});
+            var resultObj = executeCommandAtGivenBaseUrl(getReqStr, "http://api.login2explore.com:5577", "/api/irl");
+            jQuery.ajaxSetup({async: true});
+
+            if (resultObj.status === 200) {
+                var record = JSON.parse(resultObj.data).record;
+                $("#empName").val(record.name);
+                $("#Salary").val(record.salary);
+                $("#HRA").val(record.hra);
+                $("#DA").val(record.da);
+                $("#Deduction").val(record.deduction);
+                $("#empId").prop("disabled", true);
+                enableFields();
+                enableButtons(false, true, true);
+                $("#empName").focus();
+            } else {
+                enableFields();
+                enableButtons(true, false, true);
+                $("#empName").focus();
+            }
+        }
+
+        function saveEmployee() {
+            var jsonStr = validateAndGetFormData();
+            if (jsonStr === "") {
+                return;
+            }
+            var putReqStr = createPUTRequest("90932220|-31949213784165025|90963593", jsonStr, "EMP-DB", "EmpData");
+            jQuery.ajaxSetup({async: false});
+            var resultObj = executeCommandAtGivenBaseUrl(putReqStr, "http://api.login2explore.com:5577", "/api/iml");
+            jQuery.ajaxSetup({async: true});
+            alert(JSON.stringify(resultObj));
+            resetForm();
+        }
+
+        function updateEmployee() {
+            var jsonStr = validateAndGetFormData();
+            if (jsonStr === "") {
+                return;
+            }
+            var updateReqStr = createUPDATERecordRequest("90932220|-31949213784165025|90963593", jsonStr, "EMP-DB", "EmpData", "id");
+            jQuery.ajaxSetup({async: false});
+            var resultObj = executeCommandAtGivenBaseUrl(updateReqStr, "http://api.login2explore.com:5577", "/api/iml");
+            jQuery.ajaxSetup({async: true});
+            alert(JSON.stringify(resultObj));
+            resetForm();
+        }
+    </script>
+</body>
+</html>
